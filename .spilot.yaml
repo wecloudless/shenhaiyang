@@ -1,0 +1,23 @@
+#image: pytorch/pytorch:1.9.0-cuda10.2-cudnn7-runtime
+image: wangqipeng/wecloud_train:v0.2.0
+job_name: resnet-shy
+
+setup: |
+  uname -a
+  echo "hello world"
+  python3 --version
+  pip3 install -r requirements.txt
+
+run: |
+  python 
+  -u 
+  trainer.py 
+
+profile: |
+  python 
+  -u 
+  trainer.py 
+  --profiling
+
+
+  
