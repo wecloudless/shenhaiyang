@@ -47,7 +47,7 @@ parser.add_argument('--weight-decay', '--wd', default=1e-4, type=float,
                     metavar='W', help='weight decay (default: 1e-4)')
 parser.add_argument('--print-freq', '-p', default=50, type=int,
                     metavar='N', help='print frequency (default: 50)')
-parser.add_argument('--resume', default='', type=str, metavar='PATH',
+parser.add_argument('--resume', default='output/', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true',
                     help='evaluate model on validation set')
@@ -57,16 +57,18 @@ parser.add_argument('--half', dest='half', action='store_true',
                     help='use half-precision(16-bit) ')
 parser.add_argument('--save-dir', dest='save_dir',
                     help='The directory used to save the trained models',
-                    default='save_temp', type=str)
+                    default='output', type=str)
 parser.add_argument('--save-every', dest='save_every',
                     help='Saves checkpoints at every specified number of epochs',
-                    type=int, default=10)
+                    type=int, default=1)
 best_prec1 = 0
 
 
 def main():
     global args, best_prec1
+    global accumulated_training_time
     args = parser.parse_args()
+    t0 = time.time()
 
 
     # Check the save_dir exists or not
@@ -140,6 +142,8 @@ def main():
     iteration, trained_samples = 0, 0
     total_samples = len(train_loader.dataset) * args.batch_size
     lr = args.lr
+    t1 = time.time()
+    print("[profiling] init time: {}s".format(t1-t0))
     for epoch in range(args.start_epoch, args.epochs):
         beg_time = time.time()
 
@@ -187,6 +191,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
     """
         Run one train epoch
     """
+    global accumulated_training_time
     batch_time = AverageMeter()
     data_time = AverageMeter()
     losses = AverageMeter()
@@ -204,6 +209,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
 
         # measure data loading time
         data_time.update(time.time() - end)
+        t0 = time.time()
 
         target = target.cuda()
         input_var = input.cuda()
@@ -230,6 +236,8 @@ def train(train_loader, model, criterion, optimizer, epoch):
         # measure elapsed time
         batch_time.update(time.time() - end)
         end = time.time()
+        accumulated_training_time += end - t0
+        print("[profiling] step time: {}s, accumuated training time: {}s".format(end - t0, accumulated_training_time))
 
         if i % args.print_freq == 0:
             print('Epoch: [{0}][{1}/{2}]\t'
@@ -339,4 +347,6 @@ def accuracy(output, target, topk=(1,)):
 
 
 if __name__ == '__main__':
+    global accumulated_training_time
+    accumulated_training_time = 0
     main()
