@@ -209,7 +209,8 @@ def main():
             'best_prec1': best_prec1,
         }, is_best, filename=os.path.join(args.save_dir, 'model.th'))"""
         #start to save best performance model after learning rate decay to 0.01
-        os.mkdir(checkpoint_dir.format(epoch=epoch))
+        if not os.path.exists(checkpoint_dir.format(epoch=epoch)):
+            os.mkdir(checkpoint_dir.format(epoch=epoch))
         checkpoint_path = os.path.join(checkpoint_dir.format(epoch=epoch), 'checkpoint.pth')
         if best_prec1 < prec1:
             weights_path = checkpoint_path#.format(epoch=epoch)
